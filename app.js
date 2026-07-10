@@ -9,9 +9,11 @@ const recordCount = document.querySelector("#recordCount");
 const daysSinceMowing = document.querySelector("#daysSinceMowing");
 const saveMessage = document.querySelector("#saveMessage");
 const consultRecord = document.querySelector("#consultRecord");
-const consultPhotos = document.querySelector("#consultPhotos");
 const consultQuestion = document.querySelector("#consultQuestion");
-const shareConsultation = document.querySelector("#shareConsultation");
+const makeReport = document.querySelector("#makeReport");
+const reportArea = document.querySelector("#reportArea");
+const reportOutput = document.querySelector("#reportOutput");
+const copyReport = document.querySelector("#copyReport");
 const consultMessage = document.querySelector("#consultMessage");
 
 function todayString() {
@@ -78,7 +80,7 @@ function updateConsultChoices(records) {
   if ([...consultRecord.options].some((option) => option.value === currentValue)) {
     consultRecord.value = currentValue;
   }
-  shareConsultation.disabled = records.length === 0;
+  makeReport.disabled = records.length === 0;
   if (records.length === 0) consultMessage.textContent = "先に1件以上の記録を追加してください。";
   else if (consultMessage.textContent.includes("先に1件")) consultMessage.textContent = "";
 }
@@ -139,7 +141,7 @@ mowedInput.addEventListener("change", () => {
   if (!mowedInput.checked) mowingHeightInput.value = "";
 });
 
-shareConsultation.addEventListener("click", async () => {
+makeReport.addEventListener("click", () => {
   const records = loadRecords().sort((a, b) =>
     b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt)
   );
@@ -160,30 +162,20 @@ shareConsultation.addEventListener("click", async () => {
     "",
     "写真も参考に、考えられる原因と次の作業を優先順に教えてください。薬剤などを勧める場合は、安全上の注意も添えてください。",
   ].join("\n");
-  const files = [...consultPhotos.files];
-  const shareData = { title: "芝生管理の相談", text };
-  if (files.length && navigator.canShare?.({ files })) shareData.files = files;
+  reportOutput.value = text;
+  reportArea.hidden = false;
+  consultMessage.textContent = "報告文を作りました。内容を確認してコピーしてください。";
+  reportOutput.scrollIntoView({ behavior: "smooth", block: "center" });
+});
 
+copyReport.addEventListener("click", async () => {
   try {
-    if (navigator.share) {
-      await navigator.share(shareData);
-      consultMessage.textContent = files.length && !shareData.files
-        ? "記録を共有しました。写真はChatGPT側で追加してください。"
-        : "共有画面を開きました。ChatGPTを選んでください。";
-    } else {
-      await navigator.clipboard.writeText(text);
-      window.open("https://chatgpt.com/", "_blank", "noopener");
-      consultMessage.textContent = "相談文をコピーしました。ChatGPTに貼り付け、写真を追加してください。";
-    }
-  } catch (error) {
-    if (error.name !== "AbortError") {
-      try {
-        await navigator.clipboard.writeText(text);
-        consultMessage.textContent = "相談文をコピーしました。ChatGPTを開いて貼り付け、写真を追加してください。";
-      } catch {
-        consultMessage.textContent = "共有できませんでした。もう一度お試しください。";
-      }
-    }
+    await navigator.clipboard.writeText(reportOutput.value);
+    consultMessage.textContent = "報告文をコピーしました。いつもの「芝生管理」の会話に貼り付けてください。";
+  } catch {
+    reportOutput.focus();
+    reportOutput.select();
+    consultMessage.textContent = "文章を選択しました。「コピー」を選んでください。";
   }
 });
 
