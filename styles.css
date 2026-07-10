@@ -147,6 +147,11 @@ textarea { resize: vertical; }
 .consult-button:hover { background: #53647a; }
 .consult-button:active { transform: translateY(3px); box-shadow: 0 2px 0 #34404f; }
 .privacy-note { margin: 13px 0 0; color: #6f7c71; font-size: .76rem; text-align: center; }
+.report-area { margin-top: 24px; padding-top: 22px; border-top: 1px dashed #bfcdbb; }
+.report-area[hidden] { display: none; }
+.report-area textarea { min-height: 250px; background: #fffef8; line-height: 1.65; }
+.copy-button { margin-top: 14px; }
+.next-steps { margin: 22px 0 0; padding: 17px 17px 17px 38px; color: #4f5d53; background: #edf4e9; border-radius: 12px; line-height: 1.8; }
 
 .records-section { padding-top: 42px; }
 .section-heading--records { margin-bottom: 18px; padding-inline: 4px; }
