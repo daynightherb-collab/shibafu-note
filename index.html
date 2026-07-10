@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#315d3b" />
+    <meta name="description" content="Macで使える、個人用の芝生管理記録アプリ" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>わが家の芝生帳</title>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__inner">
+        <p class="eyebrow">MY LAWN JOURNAL</p>
+        <h1>わが家の芝生帳</h1>
+        <p class="hero__description">今日の手入れを、気軽にひとつずつ。</p>
+        <div class="status-card" aria-live="polite">
+          <span class="status-card__icon" aria-hidden="true">✂</span>
+          <div>
+            <span class="status-card__label">前回の芝刈りから</span>
+            <strong id="daysSinceMowing">まだ記録がありません</strong>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel entry-panel" aria-labelledby="entryTitle">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">NEW RECORD</p>
+            <h2 id="entryTitle">新しい記録</h2>
+          </div>
+          <span class="leaf-mark" aria-hidden="true">☘</span>
+        </div>
+
+        <form id="recordForm">
+          <div class="form-grid">
+            <label class="field field--wide">
+              <span>日付 <em>必須</em></span>
+              <input id="date" name="date" type="date" required />
+            </label>
+
+            <label class="check-field field--wide">
+              <input id="mowed" name="mowed" type="checkbox" />
+              <span class="custom-check" aria-hidden="true">✓</span>
+              <span>
+                <strong>芝刈りをした</strong>
+                <small>チェックすると刈高を記録できます</small>
+              </span>
+            </label>
+
+            <label class="field">
+              <span>刈高</span>
+              <div class="unit-input">
+                <input id="mowingHeight" name="mowingHeight" type="number" min="0" step="0.1" inputmode="decimal" disabled />
+                <span>mm</span>
+              </div>
+            </label>
+
+            <label class="field">
+              <span>施肥量</span>
+              <div class="unit-input">
+                <input id="fertilizer" name="fertilizer" type="number" min="0" step="0.01" inputmode="decimal" />
+                <span>kg</span>
+              </div>
+            </label>
+
+            <label class="field">
+              <span>散水時間</span>
+              <div class="unit-input">
+                <input id="watering" name="watering" type="number" min="0" step="1" inputmode="numeric" />
+                <span>分</span>
+              </div>
+            </label>
+
+            <label class="field">
+              <span>目土量</span>
+              <div class="unit-input">
+                <input id="topdressing" name="topdressing" type="number" min="0" step="0.1" inputmode="decimal" />
+                <span>L</span>
+              </div>
+            </label>
+
+            <label class="field field--wide">
+              <span>作業メモ</span>
+              <textarea id="memo" name="memo" rows="4" placeholder="例：雑草を抜いた。西側が少し乾き気味。"></textarea>
+            </label>
+          </div>
+
+          <button class="primary-button" type="submit">
+            <span aria-hidden="true">＋</span> この内容で記録する
+          </button>
+          <p id="saveMessage" class="save-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="panel consult-panel" aria-labelledby="consultTitle">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">ASK CHATGPT</p>
+            <h2 id="consultTitle">ChatGPTに相談</h2>
+          </div>
+          <span class="leaf-mark" aria-hidden="true">◎</span>
+        </div>
+        <p class="consult-intro">記録と芝生の写真をまとめて、ChatGPTへ共有できます。</p>
+        <div class="form-grid">
+          <label class="field field--wide">
+            <span>相談に使う記録</span>
+            <select id="consultRecord"></select>
+          </label>
+          <label class="field field--wide">
+            <span>芝生の写真</span>
+            <input id="consultPhotos" type="file" accept="image/*" multiple />
+            <small class="field-help">iPhoneでは「写真ライブラリ」または「写真を撮る」を選べます。</small>
+          </label>
+          <label class="field field--wide">
+            <span>相談したいこと</span>
+            <textarea id="consultQuestion" rows="3" placeholder="例：芝の色が薄いのですが、次にどんな手入れをすればよいですか？"></textarea>
+          </label>
+        </div>
+        <button id="shareConsultation" class="consult-button" type="button">ChatGPTへ共有する</button>
+        <p class="privacy-note">写真と記録は、このボタンを押すまで外部へ送られません。</p>
+        <p id="consultMessage" class="save-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="records-section" aria-labelledby="recordsTitle">
+        <div class="section-heading section-heading--records">
+          <div>
+            <p class="section-kicker">HISTORY</p>
+            <h2 id="recordsTitle">これまでの記録</h2>
+          </div>
+          <span id="recordCount" class="record-count">0件</span>
+        </div>
+        <div id="recordsList" class="records-list"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>データはこのMacのブラウザ内に保存されます。</p>
+    </footer>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
