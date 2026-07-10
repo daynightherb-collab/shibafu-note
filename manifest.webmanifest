@@ -1,0 +1,11 @@
+{
+  "name": "わが家の芝生帳",
+  "short_name": "芝生帳",
+  "description": "芝生のお手入れをMac内に記録するアプリ",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f1e7",
+  "theme_color": "#315d3b"
+}
