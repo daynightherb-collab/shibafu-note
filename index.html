@@ -104,24 +104,31 @@
           </div>
           <span class="leaf-mark" aria-hidden="true">◎</span>
         </div>
-        <p class="consult-intro">記録と芝生の写真をまとめて、ChatGPTへ共有できます。</p>
+        <p class="consult-intro">記録を読みやすい報告文にまとめ、いつものChatGPTの会話へ貼り付けられます。</p>
         <div class="form-grid">
           <label class="field field--wide">
             <span>相談に使う記録</span>
             <select id="consultRecord"></select>
           </label>
           <label class="field field--wide">
-            <span>芝生の写真</span>
-            <input id="consultPhotos" type="file" accept="image/*" multiple />
-            <small class="field-help">iPhoneでは「写真ライブラリ」または「写真を撮る」を選べます。</small>
-          </label>
-          <label class="field field--wide">
             <span>相談したいこと</span>
             <textarea id="consultQuestion" rows="3" placeholder="例：芝の色が薄いのですが、次にどんな手入れをすればよいですか？"></textarea>
           </label>
         </div>
-        <button id="shareConsultation" class="consult-button" type="button">ChatGPTへ共有する</button>
-        <p class="privacy-note">写真と記録は、このボタンを押すまで外部へ送られません。</p>
+        <button id="makeReport" class="consult-button" type="button">報告文を作る</button>
+        <div id="reportArea" class="report-area" hidden>
+          <label class="field">
+            <span>できあがった報告文</span>
+            <textarea id="reportOutput" rows="13" readonly></textarea>
+          </label>
+          <button id="copyReport" class="primary-button copy-button" type="button">報告文をコピー</button>
+          <ol class="next-steps">
+            <li>ChatGPTで、いつもの「芝生管理」の会話を開く</li>
+            <li>コピーした報告文を貼り付ける</li>
+            <li>芝生の写真を添付して送信する</li>
+          </ol>
+        </div>
+        <p class="privacy-note">記録は外部へ自動送信されません。</p>
         <p id="consultMessage" class="save-message" role="status" aria-live="polite"></p>
       </section>
 
