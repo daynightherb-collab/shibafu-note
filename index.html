@@ -104,8 +104,9 @@
           </div>
 
           <button class="primary-button" type="submit">
-            <span aria-hidden="true">＋</span> この内容で記録する
+            <span aria-hidden="true">＋</span> <span id="submitLabel">この内容で記録する</span>
           </button>
+          <button id="cancelEdit" class="secondary-button cancel-edit" type="button" hidden>変更を取り消す</button>
           <p id="saveMessage" class="save-message" role="status" aria-live="polite"></p>
         </form>
       </section>
@@ -201,7 +202,7 @@
       <p>データはこの端末のブラウザ内に保存されます。</p>
     </footer>
 
-    <script src="report-core.js?v=6" defer></script>
-    <script src="app-v2.js?v=6" defer></script>
+    <script src="report-core.js?v=7" defer></script>
+    <script src="app-v2.js?v=7" defer></script>
   </body>
 </html>
