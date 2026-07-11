@@ -88,6 +88,14 @@
               <textarea id="memo" name="memo" rows="4" placeholder="例：雑草を抜いた。西側が少し乾き気味。"></textarea>
             </label>
 
+            <div class="field field--wide">
+              <span>その他の作業</span>
+              <div class="compact-checks">
+                <label><input name="spiking" type="checkbox" /> スパイキング</label>
+                <label><input name="thatching" type="checkbox" /> サッチング</label>
+              </div>
+            </div>
+
             <label class="field field--wide">
               <span>作業時の写真（複数選択可）</span>
               <input id="photos" name="photos" type="file" accept="image/*" multiple />
@@ -119,33 +127,6 @@
         <div id="yearComparison"></div>
       </section>
 
-      <section class="panel kuon-panel" aria-labelledby="kuonTitle">
-        <div class="section-heading">
-          <div><p class="section-kicker">KUON REPORT</p><h2 id="kuonTitle">久遠相談用レポート</h2></div>
-        </div>
-        <p class="consult-intro">直近10件・経過日数・年間集計と、選んだ写真をひとまとめにします。</p>
-        <div id="reportPhotoChoices" class="photo-choices"></div>
-        <label class="field field--wide">
-          <span>久遠への自由メモ</span>
-          <textarea id="kuonMemo" rows="4" placeholder="例：昨年より色むらが気になります。"></textarea>
-        </label>
-        <button id="downloadKuonReport" class="consult-button" type="button">レポート一式を作る</button>
-        <p id="kuonMessage" class="save-message" role="status" aria-live="polite"></p>
-      </section>
-
-      <section class="panel backup-panel" aria-labelledby="backupTitle">
-        <div class="section-heading">
-          <div><p class="section-kicker">BACKUP</p><h2 id="backupTitle">バックアップと復元</h2></div>
-        </div>
-        <p class="consult-intro">機種変更や誤操作に備えて、定期的なJSON保存がおすすめです。</p>
-        <div class="backup-actions">
-          <button id="exportJson" class="secondary-button" type="button">写真込みJSONを書き出す</button>
-          <button id="exportCsv" class="secondary-button" type="button">記録CSVを書き出す</button>
-          <label class="secondary-button file-button">JSONから復元<input id="restoreJson" type="file" accept="application/json,.json" /></label>
-        </div>
-        <p id="backupMessage" class="save-message" role="status" aria-live="polite"></p>
-      </section>
-
       <section class="panel consult-panel" aria-labelledby="consultTitle">
         <div class="section-heading">
           <div>
@@ -157,8 +138,13 @@
         <p class="consult-intro">記録を読みやすい報告文にまとめ、いつものChatGPTの会話へ貼り付けられます。</p>
         <div class="form-grid">
           <label class="field field--wide">
-            <span>相談に使う記録</span>
-            <select id="consultRecord"></select>
+            <span>相談に使う記録件数</span>
+            <select id="consultCount">
+              <option value="1">直近1件</option>
+              <option value="3">直近3件</option>
+              <option value="5" selected>直近5件</option>
+              <option value="10">直近10件</option>
+            </select>
           </label>
           <label class="field field--wide">
             <span>相談したいこと</span>
@@ -172,6 +158,7 @@
             <textarea id="reportOutput" rows="13" readonly></textarea>
           </label>
           <button id="copyReport" class="primary-button copy-button" type="button">報告文をコピー</button>
+          <button id="shareReport" class="secondary-button share-button" type="button">スマートフォンで共有</button>
           <ol class="next-steps">
             <li>ChatGPTで、いつもの「芝生管理」の会話を開く</li>
             <li>コピーした報告文を貼り付ける</li>
@@ -180,6 +167,22 @@
         </div>
         <p class="privacy-note">記録は外部へ自動送信されません。</p>
         <p id="consultMessage" class="save-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="settings-section" aria-labelledby="settingsTitle">
+        <details class="settings-details">
+          <summary id="settingsTitle">設定</summary>
+          <details class="data-details">
+            <summary>データ管理</summary>
+            <p>機種変更や誤操作に備えて、定期的なJSON保存がおすすめです。</p>
+            <div class="backup-actions">
+              <button id="exportJson" class="secondary-button" type="button">写真込みJSONを書き出す</button>
+              <button id="exportCsv" class="secondary-button" type="button">記録CSVを書き出す</button>
+              <label class="secondary-button file-button">JSONから復元<input id="restoreJson" type="file" accept="application/json,.json" /></label>
+            </div>
+            <p id="backupMessage" class="save-message" role="status" aria-live="polite"></p>
+          </details>
+        </details>
       </section>
 
       <section class="records-section" aria-labelledby="recordsTitle">
@@ -198,6 +201,7 @@
       <p>データはこの端末のブラウザ内に保存されます。</p>
     </footer>
 
+    <script src="report-core.js" defer></script>
     <script src="app-v2.js" defer></script>
   </body>
 </html>
