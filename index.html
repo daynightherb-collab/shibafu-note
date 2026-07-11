@@ -87,6 +87,12 @@
               <span>作業メモ</span>
               <textarea id="memo" name="memo" rows="4" placeholder="例：雑草を抜いた。西側が少し乾き気味。"></textarea>
             </label>
+
+            <label class="field field--wide">
+              <span>作業時の写真（複数選択可）</span>
+              <input id="photos" name="photos" type="file" accept="image/*" multiple />
+              <small class="field-help">iPhoneでは写真ライブラリから選ぶか、その場で撮影できます。</small>
+            </label>
           </div>
 
           <button class="primary-button" type="submit">
@@ -94,6 +100,50 @@
           </button>
           <p id="saveMessage" class="save-message" role="status" aria-live="polite"></p>
         </form>
+      </section>
+
+      <section class="panel dashboard-panel" aria-labelledby="dashboardTitle">
+        <div class="section-heading">
+          <div><p class="section-kicker">DASHBOARD</p><h2 id="dashboardTitle">芝生の振り返り</h2></div>
+          <label class="year-picker">集計年 <select id="summaryYear"></select></label>
+        </div>
+        <div id="intervalCards" class="summary-grid"></div>
+        <div id="annualSummary" class="annual-summary"></div>
+        <div id="monthlySummary" class="monthly-summary"></div>
+      </section>
+
+      <section class="panel comparison-panel" aria-labelledby="comparisonTitle">
+        <div class="section-heading">
+          <div><p class="section-kicker">YEAR ON YEAR</p><h2 id="comparisonTitle">前年同時期との比較</h2></div>
+        </div>
+        <div id="yearComparison"></div>
+      </section>
+
+      <section class="panel kuon-panel" aria-labelledby="kuonTitle">
+        <div class="section-heading">
+          <div><p class="section-kicker">KUON REPORT</p><h2 id="kuonTitle">久遠相談用レポート</h2></div>
+        </div>
+        <p class="consult-intro">直近10件・経過日数・年間集計と、選んだ写真をひとまとめにします。</p>
+        <div id="reportPhotoChoices" class="photo-choices"></div>
+        <label class="field field--wide">
+          <span>久遠への自由メモ</span>
+          <textarea id="kuonMemo" rows="4" placeholder="例：昨年より色むらが気になります。"></textarea>
+        </label>
+        <button id="downloadKuonReport" class="consult-button" type="button">レポート一式を作る</button>
+        <p id="kuonMessage" class="save-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="panel backup-panel" aria-labelledby="backupTitle">
+        <div class="section-heading">
+          <div><p class="section-kicker">BACKUP</p><h2 id="backupTitle">バックアップと復元</h2></div>
+        </div>
+        <p class="consult-intro">機種変更や誤操作に備えて、定期的なJSON保存がおすすめです。</p>
+        <div class="backup-actions">
+          <button id="exportJson" class="secondary-button" type="button">写真込みJSONを書き出す</button>
+          <button id="exportCsv" class="secondary-button" type="button">記録CSVを書き出す</button>
+          <label class="secondary-button file-button">JSONから復元<input id="restoreJson" type="file" accept="application/json,.json" /></label>
+        </div>
+        <p id="backupMessage" class="save-message" role="status" aria-live="polite"></p>
       </section>
 
       <section class="panel consult-panel" aria-labelledby="consultTitle">
@@ -148,6 +198,6 @@
       <p>データはこの端末のブラウザ内に保存されます。</p>
     </footer>
 
-    <script src="app.js" defer></script>
+    <script src="app-v2.js" defer></script>
   </body>
 </html>
