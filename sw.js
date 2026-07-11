@@ -1,5 +1,5 @@
-const CACHE_NAME = "lawn-journal-v6";
-const APP_FILES = ["./", "./index.html", "./styles.css", "./report-core.js?v=6", "./app-v2.js?v=6", "./manifest.webmanifest"];
+const CACHE_NAME = "lawn-journal-v7";
+const APP_FILES = ["./", "./index.html", "./styles.css", "./report-core.js?v=7", "./app-v2.js?v=7", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_FILES)));
