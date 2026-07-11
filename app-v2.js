@@ -13,21 +13,19 @@ const recordsList = $("#recordsList");
 const recordCount = $("#recordCount");
 const daysSinceMowing = $("#daysSinceMowing");
 const saveMessage = $("#saveMessage");
-const consultRecord = $("#consultRecord");
+const consultCount = $("#consultCount");
 const consultQuestion = $("#consultQuestion");
 const makeReport = $("#makeReport");
 const reportArea = $("#reportArea");
 const reportOutput = $("#reportOutput");
 const copyReport = $("#copyReport");
+const shareReport = $("#shareReport");
 const consultMessage = $("#consultMessage");
 const summaryYear = $("#summaryYear");
 const intervalCards = $("#intervalCards");
 const annualSummary = $("#annualSummary");
 const monthlySummary = $("#monthlySummary");
 const yearComparison = $("#yearComparison");
-const reportPhotoChoices = $("#reportPhotoChoices");
-const kuonMemo = $("#kuonMemo");
-const kuonMessage = $("#kuonMessage");
 const backupMessage = $("#backupMessage");
 
 if (!localStorage.getItem(SAFETY_KEY) && localStorage.getItem(STORAGE_KEY)) {
@@ -156,7 +154,6 @@ async function renderRecords() {
   updateConsultChoices(records);
   renderDashboard(records);
   await renderComparison(records, allPhotos);
-  renderPhotoChoices(allPhotos);
 
   if (!records.length) {
     recordsList.innerHTML = `<div class="empty-state"><strong>記録はまだありません</strong>最初のお手入れを上の欄から記録しましょう。</div>`;
@@ -171,9 +168,6 @@ async function renderRecords() {
 }
 
 function updateConsultChoices(records) {
-  const current = consultRecord.value;
-  consultRecord.innerHTML = ['<option value="recent">直近5件の記録</option>', ...records.map((r) => `<option value="${escapeHtml(r.id)}">${displayDate(r.date)}${r.mowed ? "・芝刈り" : ""}</option>`)].join("");
-  if ([...consultRecord.options].some((o) => o.value === current)) consultRecord.value = current;
   makeReport.disabled = records.length === 0;
   if (!records.length) consultMessage.textContent = "先に1件以上の記録を追加してください。";
 }
@@ -201,11 +195,6 @@ async function renderComparison(records, photos) {
   yearComparison.innerHTML = `<div class="comparison-grid"><div class="comparison-card"><h3>今回：${displayDate(current.date)}</h3>${await photoHtml(photos.filter((p) => p.recordId === current.id))}</div><div class="comparison-card"><h3>前年：${displayDate(previous.date)}</h3>${await photoHtml(photos.filter((p) => p.recordId === previous.id))}</div></div><table class="comparison-table"><thead><tr><th>項目</th><th>今回</th><th>前年</th></tr></thead><tbody>${fields.map((f) => `<tr><th>${f[0]}</th><td>${f[1]}</td><td>${f[2]}</td></tr>`).join("")}</tbody></table>`;
 }
 
-function renderPhotoChoices(photos) {
-  const sorted = [...photos].sort((a, b) => b.workDate.localeCompare(a.workDate));
-  reportPhotoChoices.innerHTML = sorted.length ? sorted.map((p) => `<label class="photo-choice"><img src="${URL.createObjectURL(p.blob)}" alt="${p.workDate}の写真"><input type="checkbox" value="${p.id}" aria-label="${p.workDate}の写真を選択"></label>`).join("") : '<div class="empty-state">写真付き記録を追加すると、ここで選べます。</div>';
-}
-
 mowedInput.addEventListener("change", () => { mowingHeightInput.disabled = !mowedInput.checked; if (!mowedInput.checked) mowingHeightInput.value = ""; });
 summaryYear.addEventListener("change", () => renderDashboard(sortedRecords()));
 
@@ -213,7 +202,7 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = new FormData(form);
   const id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-  const record = { id, createdAt: new Date().toISOString(), date: data.get("date"), mowed: data.get("mowed") === "on", mowingHeight: data.get("mowingHeight"), fertilizer: data.get("fertilizer"), watering: data.get("watering"), topdressing: data.get("topdressing"), memo: data.get("memo").trim() };
+  const record = { id, createdAt: new Date().toISOString(), date: data.get("date"), mowed: data.get("mowed") === "on", mowingHeight: data.get("mowingHeight"), fertilizer: data.get("fertilizer"), watering: data.get("watering"), topdressing: data.get("topdressing"), spiking: data.get("spiking") === "on", thatching: data.get("thatching") === "on", memo: data.get("memo").trim() };
   const records = loadRecords(); records.push(record); saveRecords(records);
   for (const file of [...photosInput.files]) await savePhoto({ id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`, recordId: id, name: file.name || "芝生写真.jpg", type: file.type || "image/jpeg", blob: file, capturedAt: new Date(file.lastModified || Date.now()).toISOString(), workDate: record.date, memo: record.memo });
   form.reset(); dateInput.value = todayString(); mowingHeightInput.disabled = true;
@@ -224,14 +213,9 @@ form.addEventListener("submit", async (event) => {
 
 makeReport.addEventListener("click", () => {
   const records = sortedRecords();
-  const selected = consultRecord.value === "recent" ? records.slice(0, 5) : records.filter((r) => r.id === consultRecord.value);
-  if (!selected.length) return;
-  const question = consultQuestion.value.trim();
-  const recordBlock = ["【これまでの記録】", selected.map(recordSummary).join("\n\n")];
-  const parts = question
-    ? ["芝生管理報告", "", ...recordBlock, "", "【相談したいこと】", question, "", "写真も参考に、考えられる原因と次の作業を優先順に教えてください。薬剤などを勧める場合は、安全上の注意も添えてください。"]
-    : recordBlock;
-  reportOutput.value = parts.join("\n"); reportArea.hidden = false;
+  if (!records.length) return;
+  reportOutput.value = LawnReportCore.generateReport(records, Number(consultCount.value), consultQuestion.value, todayString());
+  reportArea.hidden = false;
   consultMessage.textContent = "報告文を作りました。内容を確認してコピーしてください。";
   reportOutput.scrollIntoView({ behavior: "smooth", block: "center" });
 });
@@ -239,6 +223,21 @@ makeReport.addEventListener("click", () => {
 copyReport.addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(reportOutput.value); consultMessage.textContent = "報告文をコピーしました。"; }
   catch { reportOutput.focus(); reportOutput.select(); consultMessage.textContent = "文章を選択しました。「コピー」を選んでください。"; }
+});
+
+shareReport.addEventListener("click", async () => {
+  if (!reportOutput.value) return;
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: "芝生管理報告", text: reportOutput.value });
+      consultMessage.textContent = "共有画面を開きました。写真はChatGPT側で添付してください。";
+    } else {
+      await navigator.clipboard.writeText(reportOutput.value);
+      consultMessage.textContent = "この端末では共有画面を開けないため、報告文をコピーしました。";
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") consultMessage.textContent = "共有できませんでした。報告文をコピーしてお使いください。";
+  }
 });
 
 function downloadBlob(blob, filename) {
@@ -269,6 +268,10 @@ $("#exportCsv").addEventListener("click", () => {
 
 $("#restoreJson").addEventListener("change", async (event) => {
   const file = event.target.files[0]; if (!file) return;
+  if (!window.confirm("現在の記録と写真を安全コピーした後、選んだバックアップの内容に置き換えます。復元してよろしいですか？")) {
+    event.target.value = "";
+    return;
+  }
   try {
     const data = JSON.parse(await file.text());
     if (data.format !== "shibafu-note-backup" || !Array.isArray(data.records)) throw new Error("形式が違います");
@@ -278,37 +281,6 @@ $("#restoreJson").addEventListener("change", async (event) => {
     await renderRecords(); backupMessage.textContent = "バックアップから復元しました。";
   } catch { backupMessage.textContent = "復元できませんでした。芝生帳のJSONファイルを選んでください。"; }
   event.target.value = "";
-});
-
-function crc32(bytes) {
-  let crc = -1;
-  for (const byte of bytes) { crc ^= byte; for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1)); }
-  return (crc ^ -1) >>> 0;
-}
-
-function zipStore(entries) {
-  const encoder = new TextEncoder(); const locals = []; const centrals = []; let offset = 0;
-  const u16 = (n) => [n & 255, n >>> 8 & 255]; const u32 = (n) => [n & 255, n >>> 8 & 255, n >>> 16 & 255, n >>> 24 & 255];
-  for (const entry of entries) {
-    const name = encoder.encode(entry.name); const data = entry.data; const crc = crc32(data);
-    const local = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), ...u16(0), ...name, ...data]);
-    const central = new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset), ...name]);
-    locals.push(local); centrals.push(central); offset += local.length;
-  }
-  const centralSize = centrals.reduce((s, a) => s + a.length, 0);
-  const end = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(entries.length), ...u16(entries.length), ...u32(centralSize), ...u32(offset), ...u16(0)]);
-  return new Blob([...locals, ...centrals, end], { type: "application/zip" });
-}
-
-$("#downloadKuonReport").addEventListener("click", async () => {
-  const records = sortedRecords(); const photos = await getAllPhotos();
-  const chosenIds = [...reportPhotoChoices.querySelectorAll("input:checked")].map((x) => x.value);
-  const chosen = photos.filter((p) => chosenIds.includes(p.id)); const stats = yearStats(records, new Date().getFullYear());
-  const intervals = intervalData(records).map((x) => `- 前回${x.label}から：${x.days == null ? "記録なし" : `${x.days}日`}`).join("\n");
-  const markdown = [`# 久遠相談用 芝生管理レポート`, ``, `作成日：${displayDate(todayString())}`, ``, `## 直近10件の作業履歴`, records.slice(0, 10).map((r) => `### ${displayDate(r.date)}\n${recordSummary(r)}`).join("\n\n"), ``, `## 前回作業からの経過日数`, intervals, ``, `## ${stats.year}年の年間集計`, `- 芝刈り：${stats.mowing}回`, `- 施肥量合計：${stats.fertilizer.toFixed(2)} kg`, `- 目土量合計：${stats.topdressing.toFixed(1)} L`, `- 散水：${stats.watering}回`, `- 月別作業回数：${stats.monthly.map((n, i) => `${i + 1}月 ${n}回`).join("、")}`, ``, `## 選択した写真`, chosen.length ? chosen.map((p, i) => `- photos/${String(i + 1).padStart(2, "0")}-${p.name}（作業日 ${p.workDate}／撮影日 ${p.capturedAt.slice(0, 10)}）`).join("\n") : "写真なし", ``, `## 自由メモ`, kuonMemo.value.trim() || "なし", ``].join("\n");
-  const entries = [{ name: "久遠相談用レポート.md", data: new TextEncoder().encode(markdown) }];
-  for (let i = 0; i < chosen.length; i++) entries.push({ name: `photos/${String(i + 1).padStart(2, "0")}-${chosen[i].name.replaceAll("/", "-")}`, data: new Uint8Array(await chosen[i].blob.arrayBuffer()) });
-  downloadBlob(zipStore(entries), `久遠相談用レポート-${todayString()}.zip`); kuonMessage.textContent = "Markdownと写真をまとめて書き出しました。";
 });
 
 dateInput.value = todayString();
