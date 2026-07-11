@@ -39,18 +39,25 @@
   }
 
   function recordBlock(record, index) {
-    return [
+    const lines = [
       `【記録${index + 1}】`,
       `日付：${dateLabel(record.date)}`,
-      `芝刈り：${flag(record, "mowed")}`,
-      `刈高：${record.mowed ? formatNumber(record.mowingHeight, "mm", 1, [0, 100]) : "なし"}`,
-      `施肥量：${formatNumber(record.fertilizer, "kg", 2, [0, 1000])}`,
-      `散水時間：${formatNumber(record.watering, "分", 0, [0, 1440])}`,
-      `目土量：${formatNumber(record.topdressing, "L", 1, [0, 100000])}`,
-      `スパイキング：${flag(record, "spiking")}`,
-      `サッチング：${flag(record, "thatching")}`,
-      `メモ：${hasValue(record.memo) ? String(record.memo).trim() || "記録なし" : "記録なし"}`,
-    ].join("\n");
+    ];
+    if (record.mowed === true) {
+      lines.push("芝刈り：実施");
+      const height = formatNumber(record.mowingHeight, "mm", 1, [0, 100]);
+      if (height !== "記録なし") lines.push(`刈高：${height}`);
+    }
+    const fertilizer = formatNumber(record.fertilizer, "kg", 2, [0, 1000]);
+    const watering = formatNumber(record.watering, "分", 0, [0, 1440]);
+    const topdressing = formatNumber(record.topdressing, "L", 1, [0, 100000]);
+    if (fertilizer !== "記録なし" && numeric(record.fertilizer) > 0) lines.push(`施肥量：${fertilizer}`);
+    if (watering !== "記録なし" && numeric(record.watering) > 0) lines.push(`散水時間：${watering}`);
+    if (topdressing !== "記録なし" && numeric(record.topdressing) > 0) lines.push(`目土量：${topdressing}`);
+    if (record.spiking === true) lines.push("スパイキング：実施");
+    if (record.thatching === true) lines.push("サッチング：実施");
+    if (hasValue(record.memo) && String(record.memo).trim()) lines.push(`メモ：${String(record.memo).trim()}`);
+    return lines.join("\n");
   }
 
   function daysBetween(todayText, dateText) {
@@ -78,31 +85,11 @@
 
   function generateReport(records, count, question, todayText) {
     const selected = records.slice(0, Math.max(1, Number(count) || 1));
-    const consultation = String(question || "").trim() || "記載なし";
-    return [
-      "【相談内容】",
-      consultation,
-      "",
-      "【芝生の基本情報】",
-      "・芝種：高麗芝",
-      "・面積：約80㎡",
-      "",
-      "【直近の記録】",
-      "",
-      selected.map(recordBlock).join("\n\n"),
-      "",
-      "【作業間隔】",
-      intervals(records, todayText),
-      "",
-      "【ChatGPTへの依頼】",
-      "以下の記録と添付写真を確認し、",
-      "1. 現在の芝生の状態",
-      "2. 考えられる問題",
-      "3. 次に行う作業",
-      "4. 作業を見送る条件",
-      "5. 不明点や推測",
-      "を整理して助言してください。",
-    ].join("\n");
+    const consultation = String(question || "").trim();
+    const parts = [];
+    if (consultation) parts.push("【相談したいこと】", consultation, "");
+    parts.push(selected.map(recordBlock).join("\n\n"));
+    return parts.join("\n");
   }
 
   return { numeric, formatNumber, recordBlock, intervals, generateReport };
