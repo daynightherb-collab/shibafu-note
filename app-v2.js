@@ -9,6 +9,8 @@ const dateInput = $("#date");
 const mowedInput = $("#mowed");
 const mowingHeightInput = $("#mowingHeight");
 const photosInput = $("#photos");
+const submitLabel = $("#submitLabel");
+const cancelEdit = $("#cancelEdit");
 const recordsList = $("#recordsList");
 const recordCount = $("#recordCount");
 const daysSinceMowing = $("#daysSinceMowing");
@@ -27,6 +29,7 @@ const annualSummary = $("#annualSummary");
 const monthlySummary = $("#monthlySummary");
 const yearComparison = $("#yearComparison");
 const backupMessage = $("#backupMessage");
+let editingId = null;
 
 if (!localStorage.getItem(SAFETY_KEY) && localStorage.getItem(STORAGE_KEY)) {
   localStorage.setItem(SAFETY_KEY, localStorage.getItem(STORAGE_KEY));
@@ -75,10 +78,16 @@ async function dbRequest(mode, action) {
 
 const getAllPhotos = () => dbRequest("readonly", (store) => store.getAll());
 const savePhoto = (photo) => dbRequest("readwrite", (store) => store.put(photo));
+const deletePhoto = (id) => dbRequest("readwrite", (store) => store.delete(id));
 const clearPhotos = () => dbRequest("readwrite", (store) => store.clear());
 
 async function photosForRecord(recordId) {
   return (await getAllPhotos()).filter((photo) => photo.recordId === recordId);
+}
+
+async function deletePhotosForRecord(recordId) {
+  const photos = await photosForRecord(recordId);
+  for (const photo of photos) await deletePhoto(photo.id);
 }
 
 function displayDate(dateText) {
@@ -162,7 +171,7 @@ async function renderRecords() {
   const cards = [];
   for (const record of records) {
     const photos = allPhotos.filter((p) => p.recordId === record.id);
-    cards.push(`<article class="record-card"><div class="record-card__top"><time datetime="${record.date}">${displayDate(record.date)}</time>${record.mowed ? '<span class="mowing-badge">✂ 芝刈り</span>' : ""}</div><dl class="record-details">${record.mowed ? detail("刈高", record.mowingHeight, "mm") : ""}${detail("施肥量", record.fertilizer, "kg")}${detail("散水時間", record.watering, "分")}${detail("目土量", record.topdressing, "L")}</dl>${record.memo ? `<p class="record-memo">${escapeHtml(record.memo)}</p>` : ""}${photos.length ? `<p class="record-photo-count">写真 ${photos.length}枚</p>${await photoHtml(photos)}` : ""}</article>`);
+    cards.push(`<article class="record-card"><div class="record-card__top"><time datetime="${record.date}">${displayDate(record.date)}</time>${record.mowed ? '<span class="mowing-badge">✂ 芝刈り</span>' : ""}</div><dl class="record-details">${record.mowed ? detail("刈高", record.mowingHeight, "mm") : ""}${detail("施肥量", record.fertilizer, "kg")}${detail("散水時間", record.watering, "分")}${detail("目土量", record.topdressing, "L")}</dl>${record.memo ? `<p class="record-memo">${escapeHtml(record.memo)}</p>` : ""}${photos.length ? `<p class="record-photo-count">写真 ${photos.length}枚</p>${await photoHtml(photos)}` : ""}<div class="record-actions"><button class="record-action" type="button" data-action="edit" data-id="${escapeHtml(record.id)}">変更</button><button class="record-action record-action--delete" type="button" data-action="delete" data-id="${escapeHtml(record.id)}">削除</button></div></article>`);
   }
   recordsList.innerHTML = cards.join("");
 }
@@ -201,14 +210,63 @@ summaryYear.addEventListener("change", () => renderDashboard(sortedRecords()));
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = new FormData(form);
-  const id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-  const record = { id, createdAt: new Date().toISOString(), date: data.get("date"), mowed: data.get("mowed") === "on", mowingHeight: data.get("mowingHeight"), fertilizer: data.get("fertilizer"), watering: data.get("watering"), topdressing: data.get("topdressing"), spiking: data.get("spiking") === "on", thatching: data.get("thatching") === "on", memo: data.get("memo").trim() };
-  const records = loadRecords(); records.push(record); saveRecords(records);
+  const records = loadRecords();
+  const existing = editingId ? records.find((record) => record.id === editingId) : null;
+  const id = existing?.id || (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+  const record = { id, createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(), date: data.get("date"), mowed: data.get("mowed") === "on", mowingHeight: data.get("mowingHeight"), fertilizer: data.get("fertilizer"), watering: data.get("watering"), topdressing: data.get("topdressing"), spiking: data.get("spiking") === "on", thatching: data.get("thatching") === "on", memo: data.get("memo").trim() };
+  if (existing) records[records.findIndex((item) => item.id === editingId)] = record;
+  else records.push(record);
+  saveRecords(records);
   for (const file of [...photosInput.files]) await savePhoto({ id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`, recordId: id, name: file.name || "芝生写真.jpg", type: file.type || "image/jpeg", blob: file, capturedAt: new Date(file.lastModified || Date.now()).toISOString(), workDate: record.date, memo: record.memo });
-  form.reset(); dateInput.value = todayString(); mowingHeightInput.disabled = true;
-  saveMessage.textContent = "記録と写真をこの端末内に保存しました。";
+  const wasEditing = Boolean(editingId);
+  resetForm();
+  saveMessage.textContent = wasEditing ? "記録を変更しました。" : "記録と写真をこの端末内に保存しました。";
   await renderRecords();
   setTimeout(() => { saveMessage.textContent = ""; }, 3500);
+});
+
+function resetForm() {
+  editingId = null;
+  form.reset();
+  dateInput.value = todayString();
+  mowingHeightInput.disabled = true;
+  submitLabel.textContent = "この内容で記録する";
+  cancelEdit.hidden = true;
+}
+
+cancelEdit.addEventListener("click", resetForm);
+
+recordsList.addEventListener("click", async (event) => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+  const records = loadRecords();
+  const record = records.find((item) => item.id === button.dataset.id);
+  if (!record) return;
+  if (button.dataset.action === "edit") {
+    editingId = record.id;
+    dateInput.value = record.date;
+    mowedInput.checked = Boolean(record.mowed);
+    mowingHeightInput.disabled = !record.mowed;
+    mowingHeightInput.value = record.mowingHeight ?? "";
+    form.elements.fertilizer.value = record.fertilizer ?? "";
+    form.elements.watering.value = record.watering ?? "";
+    form.elements.topdressing.value = record.topdressing ?? "";
+    form.elements.memo.value = record.memo ?? "";
+    form.elements.spiking.checked = Boolean(record.spiking);
+    form.elements.thatching.checked = Boolean(record.thatching);
+    photosInput.value = "";
+    submitLabel.textContent = "変更内容を保存する";
+    cancelEdit.hidden = false;
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  if (button.dataset.action === "delete") {
+    if (!window.confirm(`${displayDate(record.date)}の記録と関連写真を削除します。よろしいですか？`)) return;
+    localStorage.setItem(`${SAFETY_KEY}-before-delete-${Date.now()}`, localStorage.getItem(STORAGE_KEY) || "[]");
+    saveRecords(records.filter((item) => item.id !== record.id));
+    await deletePhotosForRecord(record.id);
+    if (editingId === record.id) resetForm();
+    await renderRecords();
+  }
 });
 
 makeReport.addEventListener("click", () => {
