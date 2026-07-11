@@ -207,6 +207,11 @@ textarea { resize: vertical; }
 .record-details dt { font-size: .68rem; color: #737b74; }
 .record-details dd { margin: 2px 0 0; font-weight: 750; }
 .record-memo { margin: 14px 0 0; padding-top: 13px; border-top: 1px dashed #d3d0c5; color: #4d574f; white-space: pre-wrap; }
+.record-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px; padding-top: 13px; border-top: 1px dashed #d3d0c5; }
+.record-action { min-width: 74px; padding: 8px 12px; background: #eef3ea; border: 1px solid #c9d3c5; border-radius: 9px; color: #315d3b; font-weight: 750; cursor: pointer; }
+.record-action--delete { color: #914637; background: #fff2ee; border-color: #e1c2b9; }
+.cancel-edit { width: 100%; margin-top: 12px; }
+.cancel-edit[hidden] { display: none; }
 .empty-state { padding: 44px 20px; text-align: center; color: #6a746c; background: rgba(255,255,255,.55); border: 1px dashed #bdc5b9; border-radius: 16px; }
 .empty-state strong { display: block; margin-bottom: 6px; color: #3e5042; }
 footer { padding-bottom: 28px; color: #758077; font-size: .78rem; text-align: center; }
